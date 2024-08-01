@@ -4,4 +4,4 @@ A repository for holding the surreal queries used in the learning process of Sur
 
 ## Stream 3 - Designing schema
 
-![Finished schema diagram](./Stream 3/surrealdb_stream_3_diagram.png)
+![Finished schema diagram](https://github.com/xkonti/learning-surreal/blob/main/Stream 3/surrealdb_stream_3_diagram.png?raw=true)
