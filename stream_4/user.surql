@@ -15,3 +15,18 @@ DEFINE FIELD OVERWRITE email
     TYPE option<string>
     ASSERT $value IS NONE OR string::is::email($value)
 ;
+
+-- Gets automatically set when the user is created
+DEFINE FIELD OVERWRITE created_at
+    ON TABLE user
+    TYPE datetime
+    VALUE time::now()
+    READONLY
+;
+
+-- Gets automatically set by an event
+DEFINE FIELD OVERWRITE updated_at
+    ON TABLE user
+    TYPE datetime
+    VALUE time::now() -- This updates the field automatically
+;
