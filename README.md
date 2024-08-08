@@ -24,3 +24,9 @@ In the third stream, we designed a schema for [my blog](https://xkonti.tech).
 
 The finished schema diagram:
 ![Finished schema diagram](/stream_3/surrealdb_stream_3_diagram.png)
+
+## Stream 4 - Authentication via JWTs from Clerk
+
+In the fourth stream, we learn how to authenticate users using third-party authentication providers like Clerk. We also learn how to automatically create user record when the user is authenticated for the first time and keep it up to date afterwards.
+
+[Watch the livestream](https://youtube.com/live/L6J5v5ypZRg?feature=share)
