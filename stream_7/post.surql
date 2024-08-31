@@ -72,7 +72,7 @@ DEFINE FIELD OVERWRITE updates
 DEFINE FIELD OVERWRITE updates.*.date
     ON TABLE post
 	TYPE datetime
-    ASSERT $value > $this.published_at
+    ASSERT $value > published_at
 ;
 
 DEFINE FIELD OVERWRITE updates.*.description
@@ -83,7 +83,7 @@ DEFINE FIELD OVERWRITE updates.*.description
 DEFINE FIELD OVERWRITE last_updated
     ON TABLE post
 	TYPE datetime
-    DEFAULT $this.published_at
+    DEFAULT published_at
     COMMENT "The date and time the post was last updated"
 ;
 

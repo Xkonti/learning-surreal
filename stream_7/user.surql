@@ -13,7 +13,7 @@ DEFINE FIELD OVERWRITE username
 DEFINE FIELD OVERWRITE email
     ON TABLE user
     TYPE option<string>
-    ASSERT $value IS NONE OR $value.is_email()
+    ASSERT !$value OR $value.is_email()
 ;
 
 -- Gets automatically set when the user is created

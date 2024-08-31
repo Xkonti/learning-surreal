@@ -7,13 +7,13 @@ DEFINE TABLE OVERWRITE requires
 DEFINE FIELD OVERWRITE in
     ON TABLE requires
     TYPE record<post>
-    ASSERT $value != $this.out AND $value.exists()
+    ASSERT $value != out AND $value.exists()
 ;
 
 DEFINE FIELD OVERWRITE out
     ON TABLE requires
     TYPE record<post>
-    ASSERT $value != $this.in AND $value.exists() AND $value.learnable
+    ASSERT $value != in AND $value.exists() AND $value.learnable
 ;
 
 DEFINE INDEX OVERWRITE unique_post_requirements 

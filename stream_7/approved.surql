@@ -48,6 +48,6 @@ DEFINE EVENT OVERWRITE on_approval_update
     ON TABLE approved
     WHEN $event == "UPDATE"
     THEN {
-        THROW "Cannot update approval status (" + <string>$after.id + ")";
+        THROW "Cannot update approval status (" + (<string> $after.id) + ")";
     }
 ;

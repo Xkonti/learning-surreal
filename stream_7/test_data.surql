@@ -1,28 +1,36 @@
 -- GENERATE TEST USERS
-LET $authors: array = (<array>1..=5).map(|$i| "testuser" + <string>$i).map(|$name| {username: $name, id: type::thing("user", $name)});
+LET $userCount: int = 5;
+LET $users: array<record<user>> = (<array> 1..=$userCount).map(|$i| type::thing("user", "test" + <string> $i));
+LET $authors: array<{id: record<user>, username: string, email: string}> = $users.map(|$user: record<user>| {
+    id: $user,
+    username: $user.id(),
+    email: $user.id() + "@xkonti.tech"
+});
 
-FOR $author IN $authors {
-    CREATE $author.id SET
-        username = $author.username,
-        email = $author.username + "@xkonti.tech"
-    ;
-}
+INSERT INTO user $authors;
 
 -- GENERATE TEST POSTS
-LET $posts: array = (<array>1..=2000).map(|$i| "post" + <string>$i).map(|$name| {title: $name, id: type::thing("post", $name)});
+LET $postCount: int = 2000;
+LET $posts: array<object> = (<array> 1..=$postCount).map(|$i: int| {
+    id: type::thing("post", "post" + <string> $i),
+    title: "Post " + <string> $i,
+    description: "...",
+    slug: "post-" + <string> $i,
+    obsolete: false,
+    draft: rand::bool(),
+    learnable: rand::bool(),
+    og_image: "wololo.png",
+    published_at: rand::time()
+});
 
-FOR $post IN $posts {
-    CREATE $post.id SET
-        title = $post.title,
-        description = "...",
-        slug = $post.title.slug(),
-        obsolete = false,
-        draft = rand::bool(),
-        learnable = rand::bool(),
-        og_image = "wololo.png",
-        published_at = time::now()
-    ;
-    RELATE rand::enum($authors).id->authored->$post.id;
+INSERT INTO post $posts;
+
+LET $batchSize: int = ($postCount / $userCount);
+LET $batches = array::clump($posts.id, $batchSize);
+FOR $user IN $users {
+    LET $i: int = array::find_index($users, $user);
+    // maybe replace this via INSERT RELATION INTO authored;
+    RELATE $user->authored->($batches[$i]);
 };
 
 -- GENERATE TEST LIKES

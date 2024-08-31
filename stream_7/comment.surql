@@ -28,14 +28,14 @@ DEFINE FIELD OVERWRITE created_at
 DEFINE FIELD OVERWRITE post
     ON TABLE comment
     TYPE record<post>
-    ASSERT $this.reply_to IS NONE OR $this.reply_to.post.id == $value.id
+    ASSERT !reply_to OR reply_to.post.id == $value.id
     READONLY
 ;
 
 DEFINE FIELD OVERWRITE reply_to
     ON TABLE comment
     TYPE option<record<comment>>
-    ASSERT $value IS NONE OR $value.exists()
+    ASSERT !$value OR $value.exists()
 ;
 
 DEFINE FIELD OVERWRITE likes_count
@@ -71,13 +71,13 @@ DEFINE EVENT OVERWRITE on_comment_created ON TABLE comment
 ;
 
 DEFINE EVENT OVERWRITE on_comment_approval_update ON TABLE comment
-    WHEN $event == "UPDATE" AND $before.approved IS NOT NONE AND $before.approved != $after.approved
+    WHEN $event == "UPDATE" AND $before.approved AND $before.approved != $after.approved
     THEN {
-        IF $after.approved == true {
-            UPDATE $after.post SET comments_count = $this.comments_count + 1;
+        IF $after.approved {
+            UPDATE $after.post SET comments_count += 1;
         }
         ELSE {
-            UPDATE $after.post SET comments_count = $this.comments_count - 1;
+            UPDATE $after.post SET comments_count -= 1;
         };
     }
 ;
@@ -85,8 +85,8 @@ DEFINE EVENT OVERWRITE on_comment_approval_update ON TABLE comment
 DEFINE EVENT OVERWRITE on_comment_delete ON TABLE comment
     WHEN $event == "DELETE"
     THEN {
-        IF $before.approved == true {
-            UPDATE $before.post SET comments_count = $this.comments_count - 1;
+        IF $before.approved {
+            UPDATE $before.post SET comments_count -= 1;
         };
     }
 ;

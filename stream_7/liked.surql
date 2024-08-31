@@ -29,18 +29,16 @@ DEFINE EVENT OVERWRITE on_create_update_likes_count ON TABLE liked
         IF !$target.exists() OR $target.draft {
             THROW "Can't like something that doesn't exist";
         };
-        IF $target.table() == "comment" AND $target.approved == false {
+        IF $target.table() == "comment" AND !$target.approved {
             THROW "Can't like an unapproved comment";
         };
-        LET $new_count = $target.likes_count + 1;
-        UPDATE $target SET likes_count = $new_count;
+        UPDATE $target SET likes_count += 1;
     }
 ;
 
 DEFINE EVENT OVERWRITE on_delete_update_likes_count ON TABLE liked
     WHEN $event == "DELETE"
     THEN {
-        LET $new_count = $before.out.likes_count - 1;
-        UPDATE $before.out SET likes_count = $new_count;
+        UPDATE $before.out SET likes_count -= 1;
     }
 ;
