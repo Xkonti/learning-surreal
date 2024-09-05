@@ -63,11 +63,30 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
                 deleted_at = NONE,
                 last_update_id = $update_id
             ;
+
+            FOR $topic_id_string IN $post.topic_ids {
+                LET $topic_id = type::thing("topic", $topic_id_string);
+                LET $existing_relation = (SELECT VALUE id FROM is_about WHERE in == $post_id AND out == $topic_id LIMIT 1);
+                IF !$existing_relation {
+                    RELATE $post_id->is_about->$topic_id SET last_update_id = $update_id;
+                }
+                ELSE {
+                    IF !topic_id.exists() {
+                        THROW "Invalid topic ID: " + (<string>$topic_id);
+                    };
+                    UPDATE $existing_relation SET last_update_id = $update_id;
+                };
+            };
         };
 
         -- Detect deleted posts
         LET $posts_to_delete = (SELECT VALUE id FROM post WHERE last_update_id != $update_id AND !deleted_at);
         UPDATE $posts_to_delete SET deleted_at = time::now();
+
+        -- Detect deleted post->is_about->topic relations
+        LET $post_topic_relations_to_delete = (SELECT VALUE id FROM is_about WHERE last_update_id != $update_id AND !deleted_at);
+        UPDATE $post_topic_relations_to_delete SET deleted_at = time::now();
+
 
         -- UPDATE series - mark them as not deleted to un-delete previously deleted series that
         -- match the ID
