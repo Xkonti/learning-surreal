@@ -142,6 +142,16 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
         LET $about_topic_relations_to_delete = (SELECT VALUE id FROM is_about WHERE last_update_id != $update_id AND !deleted_at);
         UPDATE $about_topic_relations_to_delete SET deleted_at = time::now();
 
+
+        -- Detect invalid relations - relations not marked as deleted but pointing frot/to a deleted record
+        -- This signifies invalid input data
+
+        -- is_about relations
+        LET $invalid_is_about_relations = (SELECT in.id AS in_id, out.id AS out_id FROM is_about WHERE !deleted_at AND (in.deleted_at OR out.deleted_at));
+        IF $invalid_is_about_relations.len() > 0 {
+            THROW "Invalid is_about relations detected: " + <string>$invalid_is_about_relations;
+        };
+
         return true;
     }
 ;
