@@ -71,7 +71,7 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
                     RELATE $post_id->is_about->$topic_id SET last_update_id = $update_id;
                 }
                 ELSE {
-                    IF !topic_id.exists() {
+                    IF !$topic_id.exists() {
                         THROW "Invalid topic ID: " + (<string>$topic_id);
                     };
                     UPDATE $existing_relation SET last_update_id = $update_id;
