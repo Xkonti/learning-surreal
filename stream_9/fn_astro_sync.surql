@@ -132,11 +132,35 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
                     ;
                 };
             };
+
+            FOR $post_id_string IN $s.post_ids {
+                LET $post_id = type::thing("post", $post_id_string);
+                LET $existing_relation = (SELECT VALUE id FROM contains WHERE in == $series_id AND out == $post_id LIMIT 1);
+                IF !$existing_relation {
+                    RELATE $series_id->contains->$post_id SET
+                        last_update_id = $update_id,
+                        deleted_at = NONE
+                    ;
+                }
+                ELSE {
+                    IF !$post_id.exists() {
+                        THROW "Invalid post ID: " + (<string>$post_id);
+                    };
+                    UPDATE $existing_relation SET
+                        last_update_id = $update_id,
+                        deleted_at = NONE
+                    ;
+                };
+            };
         };
 
         -- Detect deleted series
         LET $series_to_delete = (SELECT VALUE id FROM series WHERE last_update_id != $update_id AND !deleted_at);
         UPDATE $series_to_delete SET deleted_at = time::now();
+
+        -- Detect deleted series->contains->post relations
+        LET $contains_relations_to_delete = (SELECT VALUE id FROM contains WHERE last_update_id != $update_id AND !deleted_at);
+        UPDATE $contains_relations_to_delete SET deleted_at = time::now();
 
         -- Detect deleted something->is_about->topic relations
         LET $about_topic_relations_to_delete = (SELECT VALUE id FROM is_about WHERE last_update_id != $update_id AND !deleted_at);
@@ -150,6 +174,12 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
         LET $invalid_is_about_relations = (SELECT in.id AS in_id, out.id AS out_id FROM is_about WHERE !deleted_at AND (in.deleted_at OR out.deleted_at));
         IF $invalid_is_about_relations.len() > 0 {
             THROW "Invalid is_about relations detected: " + <string>$invalid_is_about_relations;
+        };
+
+        -- contains relations
+        LET $invalid_contains_relations = (SELECT in.id AS in_id, out.id AS out_id FROM contains WHERE !deleted_at AND (in.deleted_at OR out.deleted_at));
+        IF $invalid_contains_relations.len() > 0 {
+            THROW "Invalid contains relations detected: " + <string>$invalid_contains_relations;
         };
 
         return true;

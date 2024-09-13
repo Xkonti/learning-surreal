@@ -22,7 +22,7 @@ DEFINE INDEX OVERWRITE unique_relation
     ON TABLE liked
     COLUMNS in, out UNIQUE;
 
-DEFINE EVENT OVERWRITE on_create_update_likes_count ON TABLE liked
+DEFINE EVENT OVERWRITE on_create ON TABLE liked
     WHEN $event == "CREATE"
     THEN {
         LET $target = $after.out;
@@ -36,7 +36,7 @@ DEFINE EVENT OVERWRITE on_create_update_likes_count ON TABLE liked
     }
 ;
 
-DEFINE EVENT OVERWRITE on_delete_update_likes_count ON TABLE liked
+DEFINE EVENT OVERWRITE on_delete ON TABLE liked
     WHEN $event == "DELETE"
     THEN {
         UPDATE $before.out SET likes_count -= 1;
