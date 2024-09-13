@@ -4,13 +4,6 @@ DEFINE TABLE OVERWRITE contains
     SCHEMAFULL
 ;
 
-DEFINE FIELD OVERWRITE deleted_at
-    ON TABLE contains
-    TYPE option<datetime>
-    DEFAULT NONE
-    COMMENT "The date and time the relation was marked as deleted, it will be automatically deleted after a certain amount of time"
-;
-
 DEFINE FIELD OVERWRITE last_update_id
     ON TABLE contains
     TYPE uuid

@@ -1,6 +1,6 @@
 DEFINE TABLE OVERWRITE comment TYPE NORMAL SCHEMAFULL
     PERMISSIONS
-        FOR select WHERE approved = true
+        FOR select WHERE approved = true AND !post.draft AND !post.deleted_at
         FOR create FULL
 ;
 

@@ -130,6 +130,16 @@ DEFINE EVENT OVERWRITE on_post_date_update
     }
 ;
 
+DEFINE EVENT OVERWRITE on_post_delete ON TABLE post
+    WHEN $event == "DELETE"
+    THEN {
+        -- Delete all comments for the post when deleting the post
+        LET $post_id = $before.id;
+        LET $comments = (SELECT VALUE id FROM comment WHERE post.id == $post_id);
+        DELETE $comments;
+    }
+;
+
 DEFINE INDEX OVERWRITE unique_slug
     ON TABLE post 
     COLUMNS slug

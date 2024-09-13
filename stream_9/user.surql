@@ -38,3 +38,10 @@ DEFINE FIELD OVERWRITE updated_at
     TYPE datetime
     VALUE time::now() -- This updates the field automatically
 ;
+
+-- Make sure the author_id is unique
+DEFINE INDEX OVERWRITE unique_author_id
+    ON TABLE user 
+    COLUMNS author_id
+    UNIQUE
+;
