@@ -15,6 +15,12 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
             IF !$post.id.is_uuid() {
                 THROW "Invalid post ID: " + <string>$post.id;
             };
+            IF !$post.authors.is_array() {
+                THROW "Authors for a post must be an array - post ID: " + <string>$post.id;
+            };
+            IF $post.authors.len() == 0 {
+                THROW "Post must have at least one author - post ID: " + <string>$post.id;
+            };
             IF !$post.topic_ids.is_array() {
                 THROW "Topics for a post must be an array - post ID: " + <string>$post.id;
             };
@@ -73,6 +79,28 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
                 last_update_id = $update_id
             ;
 
+            FOR $author_id_string IN $post.authors {
+                LET $author_id = (SELECT VALUE id FROM user WHERE author_id == $author_id_string LIMIT 1)[0];
+                IF !$author_id {
+                    THROW "Invalid author ID: " + <string>$author_id_string + " - post ID: " + <string>$post.id;
+                };
+
+                LET $existing_relation = (SELECT VALUE id FROM authored WHERE in == $author_id AND out == $post_id LIMIT 1);
+                IF !$existing_relation {                    
+                    RELATE $author_id->authored->$post_id SET
+                        last_update_id = $update_id
+                    ;
+                }
+                ELSE {
+                    IF !$post_id.exists() {
+                        THROW "Invalid post ID: " + (<string>$post_id);
+                    };
+                    UPDATE $existing_relation SET
+                        last_update_id = $update_id
+                    ;
+                };
+            };
+
             FOR $topic_id_string IN $post.topic_ids {
                 LET $topic_id = type::thing("topic", $topic_id_string);
                 LET $existing_relation = (SELECT VALUE id FROM is_about WHERE in == $post_id AND out == $topic_id LIMIT 1);
@@ -94,11 +122,13 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
             };
         };
 
-        -- TODO: Check if "deleting" a post needs to update the post->is_about->topic relations
-
         -- Detect deleted posts
         LET $posts_to_delete = (SELECT VALUE id FROM post WHERE last_update_id != $update_id AND !deleted_at);
         UPDATE $posts_to_delete SET deleted_at = time::now();
+
+        -- Detect deleted user->authored->post relations
+        LET $authored_relations_to_delete = (SELECT VALUE id FROM authored WHERE last_update_id != $update_id);
+        DELETE $authored_relations_to_delete;
         
 
         -- UPDATE series - mark them as not deleted to un-delete previously deleted series that

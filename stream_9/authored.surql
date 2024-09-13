@@ -6,10 +6,10 @@ DEFINE TABLE OVERWRITE authored
         FOR select WHERE $access = "users" AND in = $auth.id
 ;
 
-DEFINE FIELD OVERWRITE notes
+DEFINE FIELD OVERWRITE last_update_id
     ON TABLE authored
-    TYPE option<string>
-    DEFAULT NONE
+    TYPE uuid
+    COMMENT "The ID of the last update to the relation - used to detect deleted relations"
 ;
 
 DEFINE INDEX OVERWRITE unique_relation

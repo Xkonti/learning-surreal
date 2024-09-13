@@ -16,6 +16,14 @@ DEFINE FIELD OVERWRITE email
     ASSERT !$value OR $value.is_email()
 ;
 
+DEFINE FIELD OVERWRITE author_id
+    ON TABLE user
+    TYPE option<string>
+    DEFAULT NONE
+    PERMISSIONS NONE
+    COMMENT "An unique ID of the user that persists across multiple database instances - used to identify post authors"
+;
+
 -- Gets automatically set when the user is created
 DEFINE FIELD OVERWRITE created_at
     ON TABLE user
