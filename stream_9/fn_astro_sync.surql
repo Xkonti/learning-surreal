@@ -15,12 +15,21 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
             IF !$post.id.is_uuid() {
                 THROW "Invalid post ID: " + <string>$post.id;
             };
+            IF !$post.topic_ids.is_array() {
+                THROW "Topics for a post must be an array - post ID: " + <string>$post.id;
+            };
         };
 
         -- Validate series
         FOR $s IN $series {
             IF !$s.id.is_uuid() {
                 THROW "Invalid series ID: " + <string>$s.id;
+            };
+            IF !$s.topic_ids.is_array() {
+                THROW "Topics for a series must be an array - series ID: " + <string>$s.id;
+            };
+            IF !$s.post_ids.is_array() {
+                THROW "Posts for a series must be an array - series ID: " + <string>$s.id;
             };
         };
 
@@ -68,25 +77,29 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
                 LET $topic_id = type::thing("topic", $topic_id_string);
                 LET $existing_relation = (SELECT VALUE id FROM is_about WHERE in == $post_id AND out == $topic_id LIMIT 1);
                 IF !$existing_relation {
-                    RELATE $post_id->is_about->$topic_id SET last_update_id = $update_id;
+                    RELATE $post_id->is_about->$topic_id SET
+                        last_update_id = $update_id,
+                        deleted_at = NONE
+                    ;
                 }
                 ELSE {
                     IF !$topic_id.exists() {
                         THROW "Invalid topic ID: " + (<string>$topic_id);
                     };
-                    UPDATE $existing_relation SET last_update_id = $update_id;
+                    UPDATE $existing_relation SET
+                        last_update_id = $update_id,
+                        deleted_at = NONE
+                    ;
                 };
             };
         };
 
+        -- TODO: Check if "deleting" a post needs to update the post->is_about->topic relations
+
         -- Detect deleted posts
         LET $posts_to_delete = (SELECT VALUE id FROM post WHERE last_update_id != $update_id AND !deleted_at);
         UPDATE $posts_to_delete SET deleted_at = time::now();
-
-        -- Detect deleted post->is_about->topic relations
-        LET $post_topic_relations_to_delete = (SELECT VALUE id FROM is_about WHERE last_update_id != $update_id AND !deleted_at);
-        UPDATE $post_topic_relations_to_delete SET deleted_at = time::now();
-
+        
 
         -- UPDATE series - mark them as not deleted to un-delete previously deleted series that
         -- match the ID
@@ -99,11 +112,35 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
                 deleted_at: NONE,
                 last_update_id: $update_id
             };
+
+            FOR $topic_id_string IN $s.topic_ids {
+                LET $topic_id = type::thing("topic", $topic_id_string);
+                LET $existing_relation = (SELECT VALUE id FROM is_about WHERE in == $series_id AND out == $topic_id LIMIT 1);
+                IF !$existing_relation {
+                    RELATE $series_id->is_about->$topic_id SET
+                        last_update_id = $update_id,
+                        deleted_at = NONE
+                    ;
+                }
+                ELSE {
+                    IF !$topic_id.exists() {
+                        THROW "Invalid topic ID: " + (<string>$topic_id);
+                    };
+                    UPDATE $existing_relation SET
+                        last_update_id = $update_id,
+                        deleted_at = NONE
+                    ;
+                };
+            };
         };
 
         -- Detect deleted series
         LET $series_to_delete = (SELECT VALUE id FROM series WHERE last_update_id != $update_id AND !deleted_at);
         UPDATE $series_to_delete SET deleted_at = time::now();
+
+        -- Detect deleted something->is_about->topic relations
+        LET $about_topic_relations_to_delete = (SELECT VALUE id FROM is_about WHERE last_update_id != $update_id AND !deleted_at);
+        UPDATE $about_topic_relations_to_delete SET deleted_at = time::now();
 
         return true;
     }
