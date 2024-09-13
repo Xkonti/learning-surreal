@@ -74,6 +74,7 @@ DEFINE FUNCTION OVERWRITE fn::update_content(
                 og_image = $post.og_image,
                 published_on = $post.published_on,
                 published_at = $post.published_at,
+                last_updated = $post.published_at,
                 updates = $post.updates,
                 deleted_at = NONE,
                 last_update_id = $update_id
