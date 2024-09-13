@@ -1,0 +1,9 @@
+DEFINE TABLE OVERWRITE contains
+    TYPE RELATION
+    IN series OUT post ENFORCED
+    SCHEMAFULL
+;
+
+DEFINE INDEX OVERWRITE unique_relation
+    ON TABLE contains 
+    COLUMNS in, out UNIQUE;
